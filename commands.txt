@@ -1,0 +1,54 @@
+//Intalacion 
+
+//git init     git branch -m master main
+//npm init -y para intalar las dependencias
+//npm install express --save
+
+//Mover entre versiones
+
+
+# Download and install nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+
+# in lieu of restarting the shell
+\. "$HOME/.nvm/nvm.sh"
+
+# Download and install Node.js:
+nvm install 24
+
+# Verify the Node.js version:
+node -v # Should print "v24.15.0".
+
+# Verify npm version:
+npm -v # Should print "11.12.1".
+
+# Download and install nvm:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+
+# in lieu of restarting the shell
+\. "$HOME/.nvm/nvm.sh"
+
+# Download and install Node.js:
+nvm install 24
+
+# Verify the Node.js version:
+node -v # Should print "v24.15.0".
+
+# Verify npm version:
+npm -v # Should print "11.12.1".
+
+volvar a inicializar
+git init
+
+//Para escuchar los cambios en el DOM 
+node --watch app.js
+
+//Paquete para saber de los camnios en el .env
+
+//Despues de configurar el package.json en el script para correr en la terminal
+npm run dev
+
+
+//Para parsear la aplicacion este paque ayuda para escuchar y poderlo parsear
+//Dandole funcion a json y en formularios
+npm install body-parser
