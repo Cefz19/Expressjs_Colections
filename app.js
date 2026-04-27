@@ -1,5 +1,8 @@
 require("dotenv").config();
 const express = require("express");
+
+const { validateUser, isUniqueId } = require("./utils/validation");
+
 const bodyParser = require("body-parser");
 
 const fs = require("fs");
@@ -11,7 +14,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // const PORT = 3000;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 console.log(PORT);
 
 app.get("/", (req, res) => {
@@ -76,92 +79,117 @@ app.get("/users", (req, res) => {
   });
 });
 
+// Ruta para creacion de usuarios (API).
 app.post("/users", (req, res) => {
   const newUser = req.body;
-  const name = newUser.name;
-  const email = newUser.email;
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!newUser || Object.keys(newUser).length === 0) {
-    return res.status(400).json({ error: "The data was not received" });
-  }
-  if (name.length < 3) {
-    return res
-      .status(400)
-      .json({ error: "The name field must be 3 characters of longer" });
-  }
-  if (!regex.test(email)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "The email field does not conform to the expected email struture",
-      });
+    return res.status(400).json({ error: "No se enviaron datos" });
   }
 
-  fs.readFile(userFilePath, "utf-8", (err, data) => {
-    if (err) {
-      return res.status(500).json({ error: "Error with data connection" });
+  fs.readFile(userFilePath, "utf-8", (error, data) => {
+    if (error) {
+      return res.status(500).json({ error: "Error con conexión de datos" });
     }
+    
     const users = JSON.parse(data);
+
+    // 1. Validamos estructura (nombre, email, etc.)
+    const validation = validateUser(newUser, users);
+    if (!validation.isValid) {
+      return res.status(400).json({ error: validation.errors });
+    }
+
+    // 2. Validamos si el ID es único ANTES de hacer el push
+    const validationId = isUniqueId(newUser.id, users);
+    if (validationId) {
+      return res.status(400).json({
+        error: "Esa ID ya esta registrada, ingrese una diferente",
+      });
+    }
+
+    // 3. Si todo está bien, AHORA sí lo agregamos
     users.push(newUser);
-    fs.writeFile(userFilePath, JSON.stringify(users, null, 2), (err) => {
-      if (err) {
-        return res.status(500).json({ error: "Error saving user." });
+
+    fs.writeFile(userFilePath, JSON.stringify(users, null, 2), (error) => {
+      if (error) {
+        return res.status(500).json({ error: "Error al guardar el usuario nuevo" });
       }
-      res.status(201).json(newUser);
+      return res.status(201).json(newUser);
     });
   });
 });
 
+
 app.put("/users/:id", (req, res) => {
+  // Extraemos el id de la ruta dinamica y lo convertimos de string a int.
   const userId = parseInt(req.params.id, 10);
+  // Obtenemos los datos de la solicitud.
   const updateUser = req.body;
 
-  // 1. Definimos la función (mejor si está fuera o al inicio)
-  const validateForm = (userData, allUsers, isEditing) => {
-    // Validación de ID duplicado
-    if (!isEditing && allUsers.some((user) => user.id === userData.id)) {
-      return { error: true, message: "ID already exists" };
-    }
-    // Validar el nombre del nuevo usuario
-    if (
-      !userData.name ||
-      userData.name.length < 8 ||
-      userData.name.length > 20
-    ) {
-      return {
-        error: true,
-        message: "Username must be between 8 and 20 characters",
-      };
-    }
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!regex.test(userData.email)) {
-      return { error: true, message: "Email address is invalid" };
-    }
-    return { error: false };
-  };
+  if (!updateUser || Object.keys(updateUser).length === 0) {
+    return res
+      .status(400)
+      .json({ error: "El cuerpo de la solicitud no puede estar vacío" });
+  }
 
+  fs.readFile(userFilePath, "utf8", (error, data) => {
+    if (error) {
+      return res.status(500).json({
+        error: "Error con conexión de datos",
+      });
+    }
+    // Parseamos los datos JSON a Objeto.
+    let users = JSON.parse(data);
+
+    // Integramos las funciones de validacion.
+    const validation = validateUser(updateUser, users);
+
+    // Validamos los datos recibidos.
+    if (!validation.isValid) {
+      return res.status(400).json({
+        error: validation.errors,
+      });
+    } else if (updateUser.id !== userId) {
+      // Validamos que la ID de la solicitud y la ID del EndPoint sean iguales
+      return res.status(400).json({
+        error:
+          "La ID en el EndPoint de la solicitud y la ID del formato JSON deben ser iguales",
+      });
+    } else {
+      // Recorremos todos los usuarios y actualizar solo el que coincida con el ID proporcionado.
+      users = users.map((user) => {
+        // Actualizamos el usurio que coincida con el id.
+        return user.id === userId ? { ...user, ...updateUser } : user;
+      });
+      // Guardamos los cambios en el archivo JSON.
+      fs.writeFile(userFilePath, JSON.stringify(users, null, 2), (error) => {
+        // Manejamos errores
+        if (error) {
+          return res.status(500).json({
+            error: "Error al actualizar el usuario",
+          });
+        } else {
+          res.status(200).json(updateUser);
+        }
+      });
+    }
+  });
+});
+
+app.delete("/users/:id", (req, res) => {
+  const userId = parseInt(req.params.id, 10);
   fs.readFile(userFilePath, "utf-8", (err, data) => {
     if (err) {
       return res.status(500).json({ error: "Error with data connection" });
     }
     let users = JSON.parse(data);
-
-    const validation = validateForm(updateUser, users, true);
-    if(validation.error) {
-      return res.status(400).json({ error: validation.message });
-    }
-    
-
-    users = users.map((user) =>
-      user.id === userId ? { ...user, ...updateUser } : user,
-    );
+    users = users.filter((user) => user.id !== userId);
     fs.writeFile(userFilePath, JSON.stringify(users, null, 2), (err) => {
       if (err) {
-        return res.status(500).json({ error: "Error updating user" });
+        return res.status(500).json({ error: "Error delete user" });
       }
-      res.json(updateUser);
+      res.status(204).send();
     });
   });
 });
