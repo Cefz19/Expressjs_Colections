@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 
 const LoggerMiddleware = require('./middlewares/logger');
+const errorHandler = require('./middlewares/errorHandler');
 const { validateUser, isUniqueId } = require("./utils/validation");
 
 const bodyParser = require("body-parser");
@@ -14,6 +15,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(LoggerMiddleware);
+app.use(errorHandler);
 
 // const PORT = 3000;
 const PORT = process.env.PORT || 3005;
@@ -195,6 +197,10 @@ app.delete("/users/:id", (req, res) => {
     });
   });
 });
+
+app.get('/error', (req, res, next) => {
+  next(new Error('Error Intencional'));
+})
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server: http://localhost:${PORT}`);
