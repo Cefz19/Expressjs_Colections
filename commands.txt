@@ -52,3 +52,7 @@ npm run dev
 //Para parsear la aplicacion este paque ayuda para escuchar y poderlo parsear
 //Dandole funcion a json y en formularios
 npm install body-parser
+
+
+// conando para ejectura prisma y dar la coneccion con rl 
+npx prisma migrate dev --name init

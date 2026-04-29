@@ -1,14 +1,26 @@
 require("dotenv").config();
 const express = require("express");
 
-const LoggerMiddleware = require('./middlewares/logger');
-const errorHandler = require('./middlewares/errorHandler');
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { PrismaClient } = require('./generated/prisma');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+
+
+const LoggerMiddleware = require("./middlewares/logger");
+const errorHandler = require("./middlewares/errorHandler");
 const { validateUser, isUniqueId } = require("./utils/validation");
 
 const bodyParser = require("body-parser");
 
 const fs = require("fs");
 const path = require("path");
+
+
+
 const userFilePath = path.join(__dirname, "users.json");
 
 const app = express();
@@ -95,7 +107,7 @@ app.post("/users", (req, res) => {
     if (error) {
       return res.status(500).json({ error: "Error con conexión de datos" });
     }
-    
+
     const users = JSON.parse(data);
 
     // 1. Validamos estructura (nombre, email, etc.)
@@ -117,13 +129,14 @@ app.post("/users", (req, res) => {
 
     fs.writeFile(userFilePath, JSON.stringify(users, null, 2), (error) => {
       if (error) {
-        return res.status(500).json({ error: "Error al guardar el usuario nuevo" });
+        return res
+          .status(500)
+          .json({ error: "Error al guardar el usuario nuevo" });
       }
       return res.status(201).json(newUser);
     });
   });
 });
-
 
 app.put("/users/:id", (req, res) => {
   // Extraemos el id de la ruta dinamica y lo convertimos de string a int.
@@ -198,9 +211,19 @@ app.delete("/users/:id", (req, res) => {
   });
 });
 
-app.get('/error', (req, res, next) => {
-  next(new Error('Error Intencional'));
-})
+app.get("/error", (req, res, next) => {
+  next(new Error("Error Intencional"));
+});
+
+app.get("/db-users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error connection with the database." });
+  }
+});
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server: http://localhost:${PORT}`);
