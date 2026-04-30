@@ -43,7 +43,7 @@ git init
 //Para escuchar los cambios en el DOM 
 node --watch app.js
 
-//Paquete para saber de los camnios en el .env
+//Paquete para saber de los cambios en el .env
 
 //Despues de configurar el package.json en el script para correr en la terminal
 npm run dev
@@ -56,3 +56,13 @@ npm install body-parser
 
 // conando para ejectura prisma y dar la coneccion con rl 
 npx prisma migrate dev --name init
+
+//Para escuchar los cambios 
+npx prisma generate
+node prisma/seed.js
+
+//Intalacion de paquete jsonwebtoken
+npm install jsonwebtoken
+
+//Encriptador de contraseña
+npm install bcryptjs

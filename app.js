@@ -13,6 +13,7 @@ const prisma = new PrismaClient({ adapter });
 const LoggerMiddleware = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandler");
 const { validateUser, isUniqueId } = require("./utils/validation");
+const authenticateToken = require("./middlewares/auth")
 
 const bodyParser = require("body-parser");
 
@@ -224,6 +225,10 @@ app.get("/db-users", async (req, res) => {
     res.status(500).json({ error: "Error connection with the database." });
   }
 });
+
+app.get('/protected-route', authenticateToken, (req, res) => {
+  res.send('This is a protected-route.')
+})
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server: http://localhost:${PORT}`);
