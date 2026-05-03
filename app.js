@@ -7,6 +7,8 @@ const { PrismaClient } = require('@prisma/client');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 
@@ -19,6 +21,7 @@ const bodyParser = require("body-parser");
 
 const fs = require("fs");
 const path = require("path");
+const { resourceUsage } = require("process");
 
 
 
@@ -228,7 +231,25 @@ app.get("/db-users", async (req, res) => {
 
 app.get('/protected-route', authenticateToken, (req, res) => {
   res.send('This is a protected-route.')
-})
+});
+
+app.post('/register', async (req, res) => {
+  const  { email, password, name } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+   console.log("Datos recibidos:", { email, password, name });
+
+  const newUser = await prisma.user.create({
+    data: {
+      email: email,
+      password: hashedPassword,
+      name,
+      role: 'USER'
+    }
+  });
+
+  res.status(201).json({ message: 'User Registered SUccessfully' })
+});
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server: http://localhost:${PORT}`);
