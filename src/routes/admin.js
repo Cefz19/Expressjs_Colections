@@ -3,7 +3,7 @@ const { createTimeBlock, listReservations } = require('../controllers/adminContr
 const authenticateToken = require('../middlewares/auth')
 const router = Router();
 
-router.post('/time-blocks', createTimeBlock);
-router.get('/reservations', listReservations);
+router.post('/time-blocks', authenticateToken, createTimeBlock);
+router.get('/reservations', authenticateToken, listReservations);
 
 module.exports = router;
