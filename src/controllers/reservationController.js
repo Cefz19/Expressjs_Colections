@@ -1,4 +1,4 @@
-const { listReservationsService } = require("../services/adminService");
+const reservationService = require("../services/reservationService");
 
 exports.createReservation = async (req, res) => {
   try {
@@ -14,8 +14,12 @@ exports.createReservation = async (req, res) => {
 exports.getReservation = async (req, res) => {
   try {
     const reservation = await reservationService.getReservation(req.params.id);
+
+    console.log("ID buscado:", req.params.id);
+    console.log("Resultado de DB:", reservation);
+
     if (!reservation) {
-      return res.status(400).json({ error: "Reservation not found" });
+      return res.status(404).json({ error: "Reservation not found" });
     }
     res.json(reservation);
   } catch (error) {
@@ -30,7 +34,7 @@ exports.updateReservation = async (req, res) => {
       req.body,
     );
     if (!reservation) {
-      return res.status(400).json({ error: "Reservation not found" });
+      return res.status(404).json({ error: "Reservation not found" });
     }
     res.json(reservation);
   } catch (error) {
@@ -42,7 +46,7 @@ exports.deleteReservation = async (req, res) => {
   try {
     const result = await reservationService.deleteReservation(req.params.id);
     if (!result) {
-      return res.status(400).json({ error: "Reservation not found" });
+      return res.status(404).json({ error: "Reservation not found" });
     }
     res.status(204).send();
   } catch (error) {

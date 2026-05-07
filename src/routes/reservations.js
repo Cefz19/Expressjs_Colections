@@ -4,7 +4,7 @@ const authenticateToken = require('../middlewares/auth');
 
 const router = Router();
 
-router.post('/', authenticateToken, reservationController.cretateReservation);
+router.post('/', authenticateToken, reservationController.createReservation);
 router.get('/:id', authenticateToken, reservationController.getReservation);
 router.put('/:id', authenticateToken, reservationController.updateReservation);
 router.delete('/:id', authenticateToken, reservationController.deleteReservation);

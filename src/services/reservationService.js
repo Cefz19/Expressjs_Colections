@@ -1,48 +1,73 @@
-const { Pool } = require("pg");
-const { PrismaPg } = require("@prisma/adapter-pg");
+
 const { PrismaClient } = require("@prisma/client");
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+
+const prisma = new PrismaClient();
 
 exports.createReservation = async (data) => {
   const conflict = await prisma.appointment.findFirst({
     where: {
-      date: data.date,
+      date: new Date(data.date),
       timeBlockId: data.timeBlockId,
     },
   });
   if (conflict) {
-    throw new Error("The schedule is already occupied");
+    throw new Error("The schedule is already occuped");
   }
   return prisma.appointment.create({ data });
 };
 
 exports.getReservation = (id) => {
+   console.log("Modelos disponibles:", Object.keys(prisma));
   return prisma.appointment.findUnique({
-    where: { id: parseInt(id, 10) },
+    where: { id: parseInt(id, 10) }
   });
 };
 
-exports.updateReservation = async (id, date) => {
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      date: data.date,
-      timeBlockId: data.timeBlockId,
-      id: { not: parseInt(id, 10) },
-    },
-  });
-  if (conflict) {
-    throw new Error("The schedule is already occupied");
-  }
-  return prisma.appointment.update({
-    where: { id: parseInt(id, 10) },
-    data,
-  });
+exports.getAllReservations = () => {
+  return prisma.appointment.findMany();
 };
 
-exports.deleteReservation = (id) => {
-  return prisma.appointment.delete({
-    where: { id: parseInt(id, 10) },
-  });
+exports.updateReservation = async (dataID, data) => {
+  const idExists = await prisma.appointment.findUnique({
+        where: {
+            id: parseInt(dataID, 10)
+        }
+    });
+    if (!idExists) {
+        throw new Error('La reservacion a actualizar no existe')
+    } else {
+        const conflict = await prisma.appointment.findFirst({
+            where: {
+                date: data.date,
+                timeBlockId: data.timeBlockId,
+                id: { not: parseInt(dataID, 10) }
+            }
+        });
+        if (conflict) {
+            throw new Error('El horario solicitado ya esta ocupado o en uso')
+        } else {
+            return prisma.appointment.update({
+                where: {
+                    id: parseInt(dataID, 10)
+                }, data
+            });
+        }
+    }
+};
+
+exports.deleteReservation = async (dataID) => {
+      const idExists = await prisma.appointment.findUnique({
+        where: {
+            id: parseInt(dataID, 10)
+        }
+    });
+    if (!idExists) {
+        throw new Error('La reservacion a eliminar no existe')
+    } else {
+        return prisma.appointment.delete({
+            where: {
+                id: parseInt(dataID, 10)
+            }
+        });
+    }
 };
