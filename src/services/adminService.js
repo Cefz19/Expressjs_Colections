@@ -6,23 +6,23 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const createTimeBlockService = async (startTime, endTime) => {
-    const newTimeBlock = await prisma.timeBlock.create({
-        data: {
-            startTime: new Date(startTime),
-            endTime: new Date(endTime)
-        }
-    });
-    return newTimeBlock;
-} 
+  const newTimeBlock = await prisma.timeBlock.create({
+    data: {
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+    },
+  });
+  return newTimeBlock;
+};
 
 const listReservationsService = async () => {
-    const reservations = await prisma.appointment.findMany({
-        include: {
-            user: true,
-            timeBlock: true
-        }
-    });
-    return reservations;
-}
+  const reservations = await prisma.appointment.findMany({
+    include: {
+      user: true,
+      timeBlock: true,
+    },
+  });
+  return reservations;
+};
 
-module.exports = { createTimeBlockService, listReservationsService }
+module.exports = { createTimeBlockService, listReservationsService };
